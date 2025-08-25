@@ -1,0 +1,84 @@
+# General
+*.log
+.DS_Store
+Thumbs.db
+*.cache
+*.bak
+.env
+.env.*
+secrets.json
+
+# Build / publish outputs
+**/bin/
+**/obj/
+**/artifacts/
+**/publish/
+*.Publish.xml
+*.nupkg
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.VC.db
+
+# Rider
+.idea/
+*.sln.iml
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# NuGet
+*.nupkg
+packages/
+.nuget/
+.project.lock.json
+project.fragment.lock.json
+
+# Test results
+**/TestResults/
+*.trx
+*.TestSettings
+coverage/
+.coverage
+
+# Dotnet publish related
+publish/
+app.publish/
+
+# ASP.NET Core
+# Don't ignore appsettings.json (source-controlled), but ignore environment-specific and local secrets
+appsettings.*.json
+appsettings.*.Development.json
+appsettings.*.Local.json
+
+# Certificate and keys
+*.pfx
+*.key
+*.cer
+
+# User-specific files
+*.swp
+*~
+*.tmp
+
+# Generated code
+**/Generated/
+**/Generated_Code/
+
+# Logs and dumps
+*.log
+*.dmp
+
+# Docker
+docker-compose.override.yml
+.env.docker
+
+# Other
+.vsconfig
+.idea/
+node_modules/
