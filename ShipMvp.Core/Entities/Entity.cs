@@ -18,9 +18,6 @@ public abstract class Entity<TId> : IEntity<TId>
     // Versioning
     public int EntityVersion { get; set; }
 
-    // Extra properties (for extensibility)
-    public Dictionary<string, object> ExtraProperties { get; set; } = new();
-
     protected Entity(TId id)
     {
         Id = id;
@@ -28,9 +25,4 @@ public abstract class Entity<TId> : IEntity<TId>
         EntityVersion = 0;
     }
 
-    // Helper for extra properties
-    public void SetProperty(string key, object value) => ExtraProperties[key] = value;
-    public T? GetProperty<T>(string key) => ExtraProperties.TryGetValue(key, out var value) ? (T)value : default;
-    public bool HasProperty(string key) => ExtraProperties.ContainsKey(key);
-    public void RemoveProperty(string key) => ExtraProperties.Remove(key);
 }

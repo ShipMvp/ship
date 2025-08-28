@@ -1,14 +1,18 @@
+using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 
 namespace ShipMvp.Application.Infrastructure.Data;
 
-public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
+public abstract class BaseAppDbContextFactory<TDbContext> : IDesignTimeDbContextFactory<TDbContext> where TDbContext : AppDbContext
 {
-    public AppDbContext CreateDbContext(string[] args)
+    public abstract TDbContext CreateDbContext(string[] args);
+            
+
+    public DbContextOptions<TDbContext> GetOptions()
     {
-        var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
+        var optionsBuilder = new DbContextOptionsBuilder<TDbContext>();
         
         // Build configuration to read from appsettings.json
         var configuration = new ConfigurationBuilder()
@@ -26,7 +30,8 @@ public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
         
         // Use PostgreSQL for migrations design-time
         optionsBuilder.UseNpgsql(connectionString);
-        
-        return new AppDbContext(optionsBuilder.Options);
+
+        var options = optionsBuilder.Options;
+        return options;
     }
 }
