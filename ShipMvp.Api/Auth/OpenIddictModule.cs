@@ -11,7 +11,6 @@ using System;
 namespace ShipMvp.Api.Auth;
 
 [Module]
-[DependsOn<DatabaseModule>]
 public class OpenIddictModule : IModule
 {
     public void ConfigureServices(IServiceCollection services)

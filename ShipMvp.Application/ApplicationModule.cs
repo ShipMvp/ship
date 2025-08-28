@@ -11,7 +11,6 @@ using ShipMvp.Domain.Analytics;
 using ShipMvp.Domain.Files;
 using ShipMvp.Domain.Integrations;
 using ShipMvp.Application.Integrations;
-using ShipMvp.Application.Infrastructure.Data;
 using ShipMvp.Application.Infrastructure.Subscriptions;
 using ShipMvp.Application.Infrastructure.Email.Services;
 using ShipMvp.Application.Infrastructure.Email.Templates;
@@ -23,7 +22,6 @@ using ShipMvp.Application.Infrastructure.Security;
 using ShipMvp.Application.Subscriptions;
 using ShipMvp.Application.Files;
 using ShipMvp.Core.Security;
-using ShipMvp.Core.Generated;
 using ShipMvp.Core.Modules;
 using ShipMvp.Core.Attributes;
 using ShipMvp.Core.Abstractions;
@@ -33,7 +31,6 @@ using ShipMvp.Application.Infrastructure.Analytics;
 namespace ShipMvp.Application;
 
 [Module]
-[DependsOn<DatabaseModule>]
 [DependsOn<AnalyticsModule>]
 public class ApplicationModule : IModule
 {
@@ -156,6 +153,17 @@ public static class ServiceCollectionExtensions
             }
         }
 
+        return services;
+    }
+}
+
+// Temporary extension method until source generator is fixed
+public static class UnitOfWorkServiceCollectionExtensions
+{
+    public static IServiceCollection AddGeneratedUnitOfWorkWrappers(this IServiceCollection services)
+    {
+        // TODO: Implement proper UnitOfWork wrapper registrations
+        // This is a temporary implementation to resolve compilation errors
         return services;
     }
 }

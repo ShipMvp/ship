@@ -9,11 +9,11 @@ using ShipMvp.Domain.Analytics;
 
 namespace ShipMvp.Application.Infrastructure.Data;
 
-public class AppDbContext : DbContext, IDbContext
+public abstract class AppDbContext : DbContext, IDbContext
 {
     private static int _initializationCount = 0;
 
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    public AppDbContext(DbContextOptions options) : base(options)
     {
         var count = Interlocked.Increment(ref _initializationCount);
         var stackTrace = Environment.StackTrace;
@@ -94,11 +94,7 @@ public class AppDbContext : DbContext, IDbContext
             entity.Property(x => x.FilePath).IsRequired().HasMaxLength(500);
             entity.Property(x => x.FileSize).IsRequired();
             entity.HasIndex(x => x.CreatedAt);
-            
-            // Configure ExtraProperties as JSON
-            entity.Property("ExtraProperties")
-                .HasColumnName("ExtraProperties")
-                .HasColumnType("jsonb");
+          
         });
 
         modelBuilder.Entity<UserSubscription>(entity =>
@@ -164,8 +160,11 @@ public class AppDbContext : DbContext, IDbContext
 
         // Apply Integration entity configurations
         modelBuilder.ConfigureIntegrationEntities();
+        ConfigureModules(modelBuilder); 
+       
+    }
 
-        // Automatically map ExtraProperties JSON column for every entity
-        modelBuilder.MapExtraPropertiesAsJson();
+    public virtual void ConfigureModules(ModelBuilder modelBuilder){
+
     }
 }

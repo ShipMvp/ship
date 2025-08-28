@@ -42,8 +42,10 @@ public class ApiModule : IModule
             // Include XML documentation comments
             ConfigureXmlComments(options);
 
-            // Configure schema generation
-            options.CustomSchemaIds(type => type.FullName);
+            // Configure schema generation. Replace '+' (nested type separator) with '.' so
+            // generated component names match $ref references (avoids unresolved references
+            // like 'AuthController+RegisterDto').
+            options.CustomSchemaIds(type => (type.FullName ?? type.Name).Replace('+', '.'));
 
             // Document all endpoints by default (ABP-style)
             options.DocInclusionPredicate((docName, description) => true);
