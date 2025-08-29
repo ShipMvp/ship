@@ -42,8 +42,10 @@ public abstract class DatabaseModule<TDbContext> : IModule
         // Use the standardized EF persistence registration
         services.AddEfPersistence<TDbContext>();
 
-    // Allow consumers requesting the base AppDbContext to resolve to the concrete TDbContext
-    // services.AddScoped<AppDbContext>(sp => sp.GetRequiredService<TDbContext>());
+        // Allow consumers requesting the base AppDbContext to resolve to the concrete TDbContext
+        // This is required so other libraries (for example OpenIddict) which call
+        // UseDbContext<AppDbContext>() can resolve the registered concrete DbContext.
+        services.AddScoped<AppDbContext>(sp => sp.GetRequiredService<TDbContext>());
     }
 
     public void Configure(IApplicationBuilder app, IHostEnvironment env)
@@ -61,26 +63,22 @@ public abstract class DatabaseModule<TDbContext> : IModule
             context.Database.EnsureCreated();
             Console.WriteLine("[DEBUG] Database migrations applied successfully.");
 
-            // Seed initial data asynchronously in the background to avoid blocking startup
-            Console.WriteLine("[DEBUG] Starting background seeding task...");
-            // _ = Task.Run(async () =>
-            // {
-            //     try
-            //     {
-            //         Console.WriteLine("[DEBUG] Background seeding: Creating scope...");
-            //         using var seedScope = app.ApplicationServices.CreateScope();
-            //         var seedContext = seedScope.ServiceProvider.GetRequiredService<AppDbContext>();
-            //         Console.WriteLine("[DEBUG] Background seeding: Starting DataSeeder...");
-            //         await DataSeeder.SeedAsync(seedContext, seedScope.ServiceProvider);
-            //         Console.WriteLine("[DEBUG] Background seeding: Completed successfully.");
-            //     }
-            //     catch (Exception ex)
-            //     {
-            //         var logger = app.ApplicationServices.GetService<ILogger<DatabaseModule>>();
-            //         logger?.LogError(ex, "Error occurred during data seeding");
-            //         Console.WriteLine($"[DEBUG] Background seeding error: {ex.Message}");
-            //     }
-            // });
+            // Seed initial data synchronously at startup to ensure required data (OpenIddict clients, users, plans)
+            Console.WriteLine("[DEBUG] Running DataSeeder at startup...");
+            try
+            {
+                using var seedScope = app.ApplicationServices.CreateScope();
+                var seedContext = seedScope.ServiceProvider.GetRequiredService<AppDbContext>();
+                // Run synchronously so token endpoints can find seeded OpenIddict clients immediately
+                DataSeeder.SeedAsync(seedContext, seedScope.ServiceProvider).GetAwaiter().GetResult();
+                Console.WriteLine("[DEBUG] DataSeeder completed successfully.");
+            }
+            catch (Exception ex)
+            {
+                var logger = app.ApplicationServices.GetService<ILogger<DatabaseModule<TDbContext>>>();
+                logger?.LogError(ex, "Error occurred during data seeding");
+                Console.WriteLine($"[DEBUG] DataSeeder error: {ex.Message}");
+            }
 
             Console.WriteLine("[DEBUG] DatabaseModule.Configure completed successfully.");
         }
