@@ -7,16 +7,17 @@ using ShipMvp.Application;
 
 using ShipMvp.CLI.Commands;
 using ShipMvp.Core;
-using ShipMvp.Core.Generated;
 using ShipMvp.Core.Attributes;
 using ShipMvp.Core.Modules;
+using ShipMvp.Api;
+
 namespace ShipMvp.CLI;
 
 /// <summary>
 /// CLI Module for configuring command-line interface services and dependencies
 /// </summary>
 [Module]
-[DependsOn<ApplicationModule>]
+
 public class CLIModule : IModule
 {
     public void ConfigureServices(IServiceCollection services)
@@ -32,7 +33,7 @@ public class CLIModule : IModule
         // CLI-specific services
         services.AddScoped<ICliOutputFormatter, CliOutputFormatter>();
 
-        services.AddGeneratedUnitOfWorkWrappers();
+        // services.AddGeneratedUnitOfWorkWrappers(); // Commented out - not available
     }
 
     public void Configure(IApplicationBuilder app, IHostEnvironment env)

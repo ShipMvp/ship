@@ -20,9 +20,9 @@ public abstract class AppDbContext : DbContext, IDbContext
         
         Console.WriteLine("========================================================================");
         Console.WriteLine($"AppDbContext initialized {count} times");
-        Console.WriteLine($"Thread: {Thread.CurrentThread.ManagedThreadId}");
-        Console.WriteLine("Full Stack Trace:");
-        Console.WriteLine(stackTrace);
+        // Console.WriteLine($"Thread: {Thread.CurrentThread.ManagedThreadId}");
+        // Console.WriteLine("Full Stack Trace:");
+        // Console.WriteLine(stackTrace);
         Console.WriteLine("========================================================================");
     }
 
