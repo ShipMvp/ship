@@ -13,6 +13,10 @@
     <ProjectReference Include="../ShipMvp.Application/ShipMvp.Application.csproj" />
 
     <ProjectReference Include="..\ShipMvp.SourceGenerators\ShipMvp.SourceGenerators.csproj" />
+
+    <ProjectReference Include="..\ShipMvp.Api\ShipMvp.Api.csproj" />
+
+    <ProjectReference Include="..\ShipMvp.Core\ShipMvp.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
