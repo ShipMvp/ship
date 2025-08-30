@@ -13,6 +13,7 @@ using ShipMvp.Domain.Shared.Constants;
 using ShipMvp.Integration.SemanticKernel;
 using System.Text.RegularExpressions;
 using System.Reflection;
+using ShipMvp.Application.Infrastructure.EventBus;
 
 namespace ShipMvp.Api;
 
@@ -34,8 +35,9 @@ public class HostModule : IModule
         // Other service configurations
         services.AddDataProtection();
 
-        // Note: Authentication and Authorization are configured in AuthorizationModule
-        // This module focuses on CORS and other host-level configurations
+        // Resolve IConfiguration from the service provider instead of using a top-level 'builder' variable
+        var configuration = services.BuildServiceProvider().GetRequiredService<IConfiguration>();
+        services.AddDistributedEventBus(configuration);
     }
 
     public void Configure(IApplicationBuilder app, IHostEnvironment env)
