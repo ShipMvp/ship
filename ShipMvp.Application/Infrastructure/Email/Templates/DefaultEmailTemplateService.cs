@@ -215,7 +215,7 @@ Need help? Contact us at {SupportEmail}
             </div>
 
             <div style=""text-align: center;"">
-                <a href=""https://app.shipmvp.com/dashboard"" class=""button"">Go to Dashboard</a>
+                <a href=""https://app.shipmvp.com/app"" class=""button"">Go to App</a>
             </div>
 
             <p>If you have any questions or need help getting started, don't hesitate to reach out to our support team.</p>
@@ -243,7 +243,7 @@ What's next?
 - Start your first Project: Begin building your MVP
 - Join our Community: Connect with other builders
 
-Visit your dashboard: https://app.shipmvp.com/dashboard
+Visit your dashboard: https://app.shipmvp.com/app
 
 If you have any questions or need help getting started, don't hesitate to reach out to our support team.
 
