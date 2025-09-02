@@ -21,7 +21,6 @@ namespace ShipMvp.Api;
 [DependsOn<ApiModule>]
 [DependsOn<AuthorizationModule>]
 [DependsOn<OpenIddictModule>]
-[DependsOn<SemanticKernelModule>]
 public class HostModule : IModule
 {
     public void ConfigureServices(IServiceCollection services)

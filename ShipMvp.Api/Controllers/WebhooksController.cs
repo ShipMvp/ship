@@ -37,7 +37,7 @@ public class WebhooksController : ControllerBase
 
             // Get the Stripe signature header
             var stripeSignature = Request.Headers["Stripe-Signature"].FirstOrDefault();
-            
+
             if (string.IsNullOrEmpty(stripeSignature))
             {
                 _logger.LogWarning("Missing Stripe signature header");
@@ -46,7 +46,7 @@ public class WebhooksController : ControllerBase
 
             // Process the webhook
             var result = await _webhookHandler.HandleWebhookAsync(requestBody, stripeSignature);
-            
+
             if (result.Success)
             {
                 _logger.LogInformation("Successfully processed Stripe webhook event: {EventType}", result.EventType);

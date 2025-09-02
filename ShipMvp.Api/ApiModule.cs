@@ -12,7 +12,7 @@ public class ApiModule : IModule
 {
     public void ConfigureServices(IServiceCollection services)
     {
-     
+
         services.AddEndpointsApiExplorer();
 
         // Integration services are now registered in IntegrationModule
@@ -39,6 +39,17 @@ public class ApiModule : IModule
                 }
             });
 
+            // Add JWT Bearer authentication scheme
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.ApiKey,
+                Scheme = "Bearer",
+                BearerFormat = "JWT"
+            });
+
             // Include XML documentation comments
             ConfigureXmlComments(options);
 
@@ -58,6 +69,7 @@ public class ApiModule : IModule
 
             // Add operation filters for consistent API documentation
             options.OperationFilter<SwaggerResponseOperationFilter>();
+            options.OperationFilter<SwaggerAuthorizationOperationFilter>();
         });
     }
 
@@ -156,6 +168,59 @@ public class SwaggerResponseOperationFilter : Swashbuckle.AspNetCore.SwaggerGen.
             operation.Responses.TryAdd("404", new OpenApiResponse
             {
                 Description = "Not Found - Resource does not exist"
+            });
+        }
+    }
+}
+
+// Custom operation filter for authorization requirements
+public class SwaggerAuthorizationOperationFilter : Swashbuckle.AspNetCore.SwaggerGen.IOperationFilter
+{
+    public void Apply(OpenApiOperation operation, Swashbuckle.AspNetCore.SwaggerGen.OperationFilterContext context)
+    {
+        // Check if the controller or action has [Authorize] attribute
+        var hasAuthorizeOnController = context.MethodInfo.DeclaringType?.GetCustomAttributes(true)
+            .OfType<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>().Any() ?? false;
+
+        var hasAuthorizeOnAction = context.MethodInfo.GetCustomAttributes(true)
+            .OfType<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>().Any();
+
+        // Check if action has [AllowAnonymous] attribute (overrides controller-level [Authorize])
+        var hasAllowAnonymous = context.MethodInfo.GetCustomAttributes(true)
+            .OfType<Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute>().Any();
+
+        // If controller or action requires authorization and action doesn't allow anonymous
+        if ((hasAuthorizeOnController || hasAuthorizeOnAction) && !hasAllowAnonymous)
+        {
+            // Add security requirement
+            operation.Security = new List<OpenApiSecurityRequirement>
+            {
+                new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        new string[] { }
+                    }
+                }
+            };
+
+            // Add 401 Unauthorized response
+            operation.Responses.TryAdd("401", new OpenApiResponse
+            {
+                Description = "Unauthorized - Authentication required"
+            });
+
+            // Add 403 Forbidden response
+            operation.Responses.TryAdd("403", new OpenApiResponse
+            {
+                Description = "Forbidden - Insufficient permissions"
             });
         }
     }

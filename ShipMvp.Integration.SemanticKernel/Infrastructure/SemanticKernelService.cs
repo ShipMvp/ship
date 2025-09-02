@@ -8,6 +8,7 @@ using ShipMvp.Domain.Analytics;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.IO;
 using System.Net.Http;
 using System.Text;
@@ -24,6 +25,7 @@ namespace ShipMvp.Integration.SemanticKernel.Infrastructure
         private readonly IChatCompletionService _chatCompletionService;
         private readonly ILogger<SemanticKernelService> _logger;
         private readonly ActivitySource _activitySource;
+        protected readonly IServiceProvider? _serviceProvider;
         private bool _disposed = false;
 
         const int TOKENS_PER_CHUNK = 6_000;
@@ -31,8 +33,10 @@ namespace ShipMvp.Integration.SemanticKernel.Infrastructure
 
         public SemanticKernelService(
             IConfiguration configuration,
-            ILogger<SemanticKernelService> logger)
+            ILogger<SemanticKernelService> logger,
+            IServiceProvider? serviceProvider = null)
         {
+            _serviceProvider = serviceProvider;
             logger.LogInformation("Starting SemanticKernelService constructor");
 
             var openAIKey = configuration["Integrations:OpenAI:OpenAIKey"] ?? string.Empty;
@@ -57,7 +61,7 @@ namespace ShipMvp.Integration.SemanticKernel.Infrastructure
                 kernelBuilder.AddOpenAIChatCompletion(
                     modelId: "gpt-4o",
                     apiKey: openAIKey,
-                    serviceId: "gpt-4o");
+                    serviceId: "openai");
                 logger.LogInformation("Added OpenAI Chat Completion to Kernel");
             }
 
@@ -72,8 +76,24 @@ namespace ShipMvp.Integration.SemanticKernel.Infrastructure
 
             SetupPlugins(kernelBuilder);
 
+            // Build kernel first
             _kernel = kernelBuilder.Build();
             logger.LogInformation("Kernel built successfully");
+
+            // Register tool-based plugins after kernel is built
+            SetupToolPlugins(_kernel);
+
+            // List all plugin names and functions after kernel is built
+            foreach (var plugin in _kernel.Plugins)
+            {
+                Console.WriteLine($"Plugin: {plugin.Name}");
+
+                // and list all functions inside this plugin
+                foreach (var function in plugin)
+                {
+                    Console.WriteLine($"  Function: {function.Name}");
+                }
+            }
 
             _chatCompletionService = _kernel.GetRequiredService<IChatCompletionService>();
             _logger = logger;
@@ -86,14 +106,38 @@ namespace ShipMvp.Integration.SemanticKernel.Infrastructure
         private void SetupPlugins(IKernelBuilder kernelBuilder)
         {
             string projectRootDir = AppDomain.CurrentDomain.BaseDirectory;
+            var pluginsRoot = Path.Combine(projectRootDir, "Plugins");
 
-            if (Directory.Exists(Path.Combine(projectRootDir, "Plugins")))
+            if (Directory.Exists(pluginsRoot))
             {
-                kernelBuilder.Plugins.AddFromPromptDirectory(Path.Combine(projectRootDir, "Plugins", "ExcelFormatter"));
-                kernelBuilder.Plugins.AddFromPromptDirectory(Path.Combine(projectRootDir, "Plugins", "StructureAnalysis"));
-                kernelBuilder.Plugins.AddFromPromptDirectory(Path.Combine(projectRootDir, "Plugins", "GenerateFormulaSkill"));
-                kernelBuilder.Plugins.AddFromPromptDirectory(Path.Combine(projectRootDir, "Plugins", "EmailGenerator"));
+                try
+                {
+                    var subdirs = Directory.GetDirectories(pluginsRoot);
+                    foreach (var dir in subdirs)
+                    {
+                        try
+                        {
+                            // Add any prompt directory found under Plugins
+                            kernelBuilder.Plugins.AddFromPromptDirectory(dir);
+                            _logger?.LogInformation("Loaded Semantic Kernel plugin from {Dir}", dir);
+                        }
+                        catch (Exception ex)
+                        {
+                            // Continue loading other plugins, but log the failure
+                            _logger?.LogWarning(ex, "Failed to load plugin from {Dir}", dir);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogWarning(ex, "Failed to enumerate Plugins directory: {PluginsRoot}", pluginsRoot);
+                }
             }
+        }
+
+        protected virtual void SetupToolPlugins(Kernel kernel)
+        {
+
         }
 
         public Kernel Kernel => _kernel;
@@ -214,14 +258,46 @@ namespace ShipMvp.Integration.SemanticKernel.Infrastructure
                 return;
             }
 
-            // Add response data
-            var responseContent = result.GetValue<string>() ?? "";
-            activity.SetTag("llm.response_length", responseContent.Length);
-
-            // Add response content (truncated for logging)
-            if (responseContent.Length > 0)
+            // Add response data. FunctionResult may contain a string or binary (e.g., zip bytes).
+            string responseContent = string.Empty;
+            try
             {
-                activity.SetTag("llm.response_content", responseContent);
+                responseContent = result.GetValue<string>() ?? string.Empty;
+                activity.SetTag("llm.response_length", responseContent.Length);
+
+                // Add response content (truncated for logging)
+                if (responseContent.Length > 0)
+                {
+                    // Truncate to reasonable size for tags
+                    var preview = responseContent.Length > 2000 ? responseContent.Substring(0, 2000) + "…" : responseContent;
+                    activity.SetTag("llm.response_content", preview);
+                }
+            }
+            catch (InvalidCastException)
+            {
+                // Not a string, try binary
+                try
+                {
+                    var bytes = result.GetValue<byte[]>() ?? Array.Empty<byte>();
+                    activity.SetTag("llm.response_length", bytes.Length);
+
+                    if (bytes.Length > 0)
+                    {
+                        // Add a short Base64 preview (safe to include for diagnostics)
+                        var previewBytes = bytes.Length > 192 ? bytes.Take(192).ToArray() : bytes;
+                        var base64Preview = Convert.ToBase64String(previewBytes);
+                        activity.SetTag("llm.response_base64_preview", base64Preview);
+                    }
+
+                    // leave responseContent empty for binary
+                    responseContent = string.Empty;
+                }
+                catch
+                {
+                    // Unknown type or unable to extract — set length to 0
+                    activity.SetTag("llm.response_length", 0);
+                    responseContent = string.Empty;
+                }
             }
 
             // Extract and set token usage from metadata

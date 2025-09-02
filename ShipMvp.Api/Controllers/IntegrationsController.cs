@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using ShipMvp.Application.Integrations;
@@ -9,6 +10,7 @@ namespace ShipMvp.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [SwaggerTag("Integration management")]
+[Authorize]
 public class IntegrationsController : ControllerBase
 {
     private readonly IIntegrationAppService _integrationAppService;
@@ -69,7 +71,7 @@ public class IntegrationsController : ControllerBase
     [SwaggerOperation(Summary = "Get integrations by type")]
     [SwaggerResponse(200, "Success", typeof(List<IntegrationDto>))]
     public async Task<ActionResult<List<IntegrationDto>>> GetByIntegrationTypeAsync(
-        [FromRoute] IntegrationType integrationType, 
+        [FromRoute] IntegrationType integrationType,
         CancellationToken cancellationToken = default)
     {
         try
@@ -90,7 +92,7 @@ public class IntegrationsController : ControllerBase
     [SwaggerResponse(400, "Invalid request")]
     [SwaggerResponse(409, "Integration with same name already exists")]
     public async Task<ActionResult<IntegrationDto>> CreateAsync(
-        [FromBody] CreateIntegrationDto dto, 
+        [FromBody] CreateIntegrationDto dto,
         CancellationToken cancellationToken = default)
     {
         try
@@ -117,7 +119,7 @@ public class IntegrationsController : ControllerBase
     [SwaggerResponse(404, "Integration not found")]
     public async Task<ActionResult<IntegrationDto>> UpdateAsync(
         Guid id,
-        [FromBody] UpdateIntegrationDto dto, 
+        [FromBody] UpdateIntegrationDto dto,
         CancellationToken cancellationToken = default)
     {
         try
@@ -211,4 +213,4 @@ public class IntegrationsController : ControllerBase
             return StatusCode(500, "An error occurred while retrieving the integration.");
         }
     }
-} 
+}
