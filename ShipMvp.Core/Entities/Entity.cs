@@ -1,6 +1,6 @@
 namespace ShipMvp.Core.Entities;
 
-public abstract class Entity<TId> : IEntity<TId>
+public abstract class Entity<TId> : IEntity<TId>, IHasConcurrencyStamp
 {
     public TId Id { get; protected set; }
 
@@ -15,14 +15,13 @@ public abstract class Entity<TId> : IEntity<TId>
     public DateTime? DeletedAt { get; set; }
     public Guid? DeletedBy { get; set; }
 
-    // Versioning
-    public int EntityVersion { get; set; }
+    // Optimistic concurrency control (ABP pattern)
+    public string ConcurrencyStamp { get; set; } = string.Empty;
 
     protected Entity(TId id)
     {
         Id = id;
         CreatedAt = DateTime.UtcNow;
-        EntityVersion = 0;
     }
 
 }

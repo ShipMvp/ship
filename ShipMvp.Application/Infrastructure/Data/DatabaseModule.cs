@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Npgsql;
 using ShipMvp.Core.Attributes;
 using ShipMvp.Core.Modules;
+using ShipMvp.Core.Persistence;
 using ShipMvp.Core.Persistence.Ef;
 using System.Threading.Tasks;
 
@@ -37,6 +38,9 @@ public abstract class DatabaseModule<TDbContext> : IModule
 
             // Configure EF to use the constructed NpgsqlDataSource so the DbContext has a provider
             options.UseNpgsql(dataSource);
+
+            // Add concurrency stamp interceptor for automatic concurrency management
+            options.AddInterceptors(new ConcurrencyStampInterceptor(serviceProvider));
         });
 
         // Use the standardized EF persistence registration
