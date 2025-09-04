@@ -31,6 +31,11 @@ public interface IFileRepository
     Task<File> InsertAsync(File file, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Inserts multiple files in a single transaction
+    /// </summary>
+    Task<IEnumerable<File>> InsertManyAsync(IEnumerable<File> files, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Updates an existing file
     /// </summary>
     Task<File> UpdateAsync(File file, CancellationToken cancellationToken = default);

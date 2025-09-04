@@ -90,8 +90,7 @@ public class ConcurrencyStampInterceptor : SaveChangesInterceptor
                     break;
 
                 default:
-                    logger?.LogDebug("{EntityType} {EntityId} in state {State} - no stamp update needed",
-                        entityType, entityId, entry.State);
+
                     break;
             }
         }

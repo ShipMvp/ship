@@ -54,6 +54,19 @@ public class FileRepository : IFileRepository
         return file;
     }
 
+    public async Task<IEnumerable<File>> InsertManyAsync(IEnumerable<File> files, CancellationToken cancellationToken = default)
+    {
+        var filesList = files.ToList();
+        if (!filesList.Any())
+        {
+            return new List<File>();
+        }
+
+        await _dbSet.AddRangeAsync(filesList, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
+        return filesList;
+    }
+
     public async Task<File> UpdateAsync(File file, CancellationToken cancellationToken = default)
     {
         file.UpdatedAt = DateTime.UtcNow;
