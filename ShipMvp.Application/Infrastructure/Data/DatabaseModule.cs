@@ -21,22 +21,28 @@ public abstract class DatabaseModule<TDbContext> : IModule
     {
 
         // Database - Use PostgreSQL for all environments
+        // Create and register a single shared NpgsqlDataSource to avoid creating multiple
+        // connection pools which can exhaust Postgres 'max connections'.
+        services.AddSingleton<NpgsqlDataSource>(sp =>
+        {
+            var configuration = sp.GetRequiredService<IConfiguration>();
+            var connectionString = configuration.GetConnectionString("DefaultConnection");
+            var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
+            dataSourceBuilder.EnableDynamicJson();
+            // Optionally configure pool sizing here if desired, e.g.:
+            // dataSourceBuilder.UsePooling(true).WithPoolSize(20);
+            return dataSourceBuilder.Build();
+        });
+
         services.AddDbContext<TDbContext>((serviceProvider, options) =>
         {
-            var configuration = serviceProvider.GetRequiredService<IConfiguration>();
             var environment = serviceProvider.GetRequiredService<IHostEnvironment>();
 
             Console.WriteLine($"[DEBUG] Environment Name: {environment.EnvironmentName}");
             Console.WriteLine($"[DEBUG] Using PostgreSQL database for all environments");
 
-            var connectionString = configuration.GetConnectionString("DefaultConnection");
-
-            // Create a new data source with JSON support for this connection
-            var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
-            dataSourceBuilder.EnableDynamicJson();
-            var dataSource = dataSourceBuilder.Build();
-
-            // Configure EF to use the constructed NpgsqlDataSource so the DbContext has a provider
+            // Resolve the shared data source from DI and use it for EF
+            var dataSource = serviceProvider.GetRequiredService<NpgsqlDataSource>();
             options.UseNpgsql(dataSource);
 
             // Add concurrency stamp interceptor for automatic concurrency management

@@ -42,7 +42,6 @@ public class ConcurrencyStampInterceptor : SaveChangesInterceptor
         var logger = _serviceProvider.GetService<ILogger<ConcurrencyStampInterceptor>>();
 
         var stampEntries = context.ChangeTracker.Entries<IHasConcurrencyStamp>().ToList();
-        logger?.LogDebug("Processing {EntityCount} entities with concurrency stamps", stampEntries.Count);
 
         foreach (var entry in stampEntries)
         {
@@ -57,14 +56,9 @@ public class ConcurrencyStampInterceptor : SaveChangesInterceptor
                     {
                         var newStamp = guidGenerator.Create().ToString("N");
                         entry.Entity.ConcurrencyStamp = newStamp;
-                        logger?.LogDebug("Set initial ConcurrencyStamp for new {EntityType} {EntityId}: {ConcurrencyStamp}",
-                            entityType, entityId, newStamp);
+
                     }
-                    else
-                    {
-                        logger?.LogDebug("New {EntityType} {EntityId} already has ConcurrencyStamp: {ConcurrencyStamp}",
-                            entityType, entityId, entry.Entity.ConcurrencyStamp);
-                    }
+
                     break;
 
                 case EntityState.Modified:
@@ -72,21 +66,14 @@ public class ConcurrencyStampInterceptor : SaveChangesInterceptor
                     var originalStamp = entry.OriginalValues.GetValue<string>(nameof(IHasConcurrencyStamp.ConcurrencyStamp));
                     var currentStamp = entry.Entity.ConcurrencyStamp;
 
-                    logger?.LogDebug("Modified {EntityType} {EntityId} - Original: {OriginalStamp}, Current: {CurrentStamp}",
-                        entityType, entityId, originalStamp, currentStamp);
 
                     if (currentStamp == originalStamp)
                     {
                         var newStamp = guidGenerator.Create().ToString("N");
                         entry.Entity.ConcurrencyStamp = newStamp;
-                        logger?.LogDebug("Updated ConcurrencyStamp for modified {EntityType} {EntityId}: {OriginalStamp} -> {NewStamp}",
-                            entityType, entityId, originalStamp, newStamp);
+
                     }
-                    else
-                    {
-                        logger?.LogDebug("ConcurrencyStamp already updated for {EntityType} {EntityId}: {CurrentStamp}",
-                            entityType, entityId, currentStamp);
-                    }
+
                     break;
 
                 default:
